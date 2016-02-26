@@ -1,0 +1,32 @@
+.poptile-container {
+    position: relative;
+}
+
+.poptile-content-container {
+    display: none;
+    overflow: hidden;
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.poptile-filler {
+    display: none;
+    overflow: hidden;
+    width: 0%;
+    height: 0%;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    margin: 0;
+    padding: 0;
+}
+
+.poptile-close {
+    cursor: pointer;
+}
