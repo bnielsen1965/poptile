@@ -30,6 +30,8 @@
 
     // the HTML filler element
     var poptileFiller = $('<div />').addClass('poptile-filler');
+    var poptileBodyCover = $('<div / >').addClass('poptile-cover');
+        
 
     // tile event handlers
     var tileEvents = {
@@ -54,6 +56,9 @@
          * Initialize this instance of the plugin.
          */
         init: function () {
+            // keep a reference to self
+            this.instance = this;
+            
             // collect details about pop up content
             this.contentId = $(this.element).attr('data-poptile-id');
             if ( "undefined" === typeof this.contentId || false === this.contentId ) {
@@ -72,15 +77,17 @@
             
             // add events to the tile element
             $(this.element).on(tileEvents, {
-                'instance': this
+                'instance': this.instance
             });
 
             // append the filler to the tile container
             $(this.containerElement).append(poptileFiller);
             
+            $('body').append(poptileBodyCover);
+            
             // attach click event to poptile close controls in content
-            $(this.contentElement).find('.poptile-close').on('click', {'instance': this}, function(event) {
-                event.data.instance.hideContainer($(this).parent('.poptile-content-container')[0]);
+            $(this.contentElement).find('.poptile-close').on('click', {'instance': this.instance}, function(event) {
+                event.data.instance.hideContainer(event.data.instance);
                 return false;
             });
         },
@@ -89,6 +96,7 @@
          * Show the content container for this tile.
          */
         showContainer: function() {
+            this.coverBody();
             
             var contentElement = this.contentElement;
     
@@ -96,29 +104,59 @@
                     .css(this.getTileCSS())
                     .fadeIn(250, function() {
                         $(this).animate({width: '100%', height: '100%', left: 0, top: 0}, function() {
-                            $(contentElement).css({'display': 'block'});
+                            $(contentElement).css({'display': 'block'}).addClass('poptile-content-open');
                             $(poptileFiller).fadeOut(250);
                         });
             });
         },
         
         /**
+         * Cover the page body element to prevent other clicks and to capture click outside the content container.
+         */
+        coverBody: function() {
+            $(poptileBodyCover).css('display', 'block');
+            $(poptileBodyCover).on('click', {'instance': this.instance}, this.coverBodyClick);
+        },
+        
+        /**
+         * Process click event on the body cover.
+         * 
+         * @param {Object} event The click event object. Expects custom data node 'instance' that references the plugin instance for the content container displayed.
+         */
+        coverBodyClick: function (event) {
+            event.data.instance.hideContainer(event.data.instance);
+        },
+        
+        /**
          * Hide the container that is displaying the tile content.
          * 
-         * @param {HTMLElement} contentElement The DOM element that contains the content to display.
+         * @param {Object} instance A reference to the instance of the plugin for the container.
          */
-        hideContainer: function(contentElement) {
-            var tileCSS = this.getTileCSS();
+        hideContainer: function(instance) {
+            var contentElement = instance.contentElement;
+            var tileCSS = instance.getTileCSS();
+            var uncoverBodyFunction = instance.uncoverBody;
             
             $(poptileFiller).fadeIn(250, function() {
-                $(contentElement).css({'display': 'none'});
+                $(contentElement).css({'display': 'none'}).removeClass('poptile-content-open');
                 $(poptileFiller).animate(
                         tileCSS,
                         function () {
                             $(poptileFiller).fadeOut(250);
+                            uncoverBodyFunction(instance);
                         }
                 );
             });
+        },
+        
+        /**
+         * Remove the page body cover to re-enable the page.
+         * 
+         * @param {Object} instance A reference to the instance of the plugin for the container.
+         */
+        uncoverBody: function(instance) {
+            $(poptileBodyCover).off('click', instance.coverBodyClick);
+            $(poptileBodyCover).css('display', 'none');
         },
         
         /**
